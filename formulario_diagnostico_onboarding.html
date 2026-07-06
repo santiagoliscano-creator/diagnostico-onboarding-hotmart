@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reconocimiento de Necesidades · Hotmart</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --orange:#FF6A1A;
+  --orange-deep:#E85400;
+  --ink:#1D1B18;
+  --gray:#726F6A;
+  --gray-soft:#B6B2AB;
+  --paper:#FAF7F2;
+  --card:#FFFFFF;
+  --line:#EDE8E0;
+  --tint:#FFF0E4;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+}
+.app{
+  width:100%;
+  max-width:1040px;
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:100vh;
+}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr;}
+  .rail{display:none;}
+}
+
+/* ---------- Rail: route map, the signature element ---------- */
+.rail{
+  background:var(--ink);
+  color:#fff;
+  padding:36px 26px;
+  position:relative;
+  overflow:hidden;
+}
+.rail-brand{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--orange);
+  font-weight:700;
+  margin-bottom:6px;
+}
+.rail-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:20px;
+  font-weight:600;
+  line-height:1.25;
+  margin-bottom:36px;
+  color:#fff;
+}
+.route-node{
+  position:relative;
+  padding-left:26px;
+  padding-bottom:26px;
+  font-size:13px;
+  color:#8A8781;
+  transition:color .3s ease;
+}
+.route-node:last-child{padding-bottom:0;}
+.route-node::before{
+  content:'';
+  position:absolute;
+  left:0; top:2px;
+  width:11px;height:11px;
+  border-radius:50%;
+  background:#3A3733;
+  border:2px solid #3A3733;
+  transition:all .3s ease;
+}
+.route-node::after{
+  content:'';
+  position:absolute;
+  left:5px; top:14px;
+  width:1px;
+  height:calc(100% - 8px);
+  background:#3A3733;
+}
+.route-node:last-child::after{display:none;}
+.route-node.done{color:#D8D5CE;}
+.route-node.done::before{background:var(--orange);border-color:var(--orange);}
+.route-node.done::after{background:var(--orange);}
+.route-node.active{color:#fff;font-weight:600;}
+.route-node.active::before{background:var(--paper);border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,26,.35);}
+.route-label-sub{display:block;font-weight:400;color:#8A8781;font-size:12px;margin-top:2px;}
+.route-node.active .route-label-sub{color:#C9A98A;}
+
+/* ---------- Main panel ---------- */
+.main{
+  padding:44px 48px 40px;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+.progress-track{
+  height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:34px;
+}
+.progress-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .35s ease;}
+.eyebrow{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--orange-deep);margin-bottom:10px;
+}
+.q-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;font-weight:600;line-height:1.3;margin:0 0 8px;color:var(--ink);
+}
+.q-sub{color:var(--gray);font-size:14.5px;margin-bottom:28px;line-height:1.5;}
+.card-body{flex:1;}
+
+.field-group{margin-bottom:22px;}
+.field-label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:8px;}
+input[type=text],input[type=email]{
+  width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;
+  font-size:15px;font-family:'Inter',sans-serif;color:var(--ink);background:var(--card);
+  outline:none;transition:border-color .2s;
+}
+input[type=text]:focus,input[type=email]:focus{border-color:var(--orange);}
+
+.opt-list{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  display:flex;align-items:flex-start;gap:12px;
+  border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;
+  cursor:pointer;background:var(--card);transition:border-color .15s, background .15s;
+}
+.opt:hover{border-color:var(--gray-soft);}
+.opt.selected{border-color:var(--orange);background:var(--tint);}
+.opt input{margin-top:3px;accent-color:var(--orange);flex-shrink:0;}
+.opt-text{font-size:14.5px;line-height:1.4;color:var(--ink);}
+.opt-text b{display:block;font-weight:600;margin-bottom:2px;}
+
+.select-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:520px){.select-grid{grid-template-columns:1fr;}}
+
+.nav-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:32px;padding-top:22px;border-top:1px solid var(--line);
+}
+button{
+  font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;
+  border:none;border-radius:10px;padding:13px 26px;cursor:pointer;transition:opacity .15s, transform .1s;
+}
+button:active{transform:scale(.98);}
+.btn-primary{background:var(--orange);color:#fff;}
+.btn-primary:disabled{background:#F0CBAE;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--gray);}
+.btn-ghost:hover{color:var(--ink);}
+
+/* ---------- Summary screen ---------- */
+.summary-badge{
+  display:inline-block;background:var(--tint);color:var(--orange-deep);
+  font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 12px;border-radius:100px;margin-bottom:16px;
+}
+.deliverable-name{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;margin:0 0 18px;}
+.checklist{list-style:none;padding:0;margin:0 0 28px;}
+.checklist li{
+  padding:11px 0 11px 30px;border-bottom:1px solid var(--line);position:relative;font-size:14.5px;color:var(--ink);
+}
+.checklist li::before{content:'✓';position:absolute;left:0;color:var(--orange);font-weight:700;}
+.json-box{
+  background:var(--ink);color:#E9E5DE;border-radius:12px;padding:18px;
+  font-family:monospace;font-size:12px;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+}
+.copy-row{display:flex;gap:12px;margin-top:16px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="rail" id="rail"></div>
+  <div class="main">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="card-body" id="cardBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA: routing tree, exactly mirroring "Mapa de preguntas OB"
+   ============================================================ */
+
+const NICHOS = ["Fitness y salud","Finanzas e inversión","Marketing digital","Desarrollo personal",
+  "Idiomas","Belleza y estética","Gastronomía y repostería","Manualidades y arte","Música e instrumentos",
+  "Tecnología y programación","Negocios y emprendimiento","Relaciones y sexualidad","Espiritualidad y bienestar",
+  "Educación académica","Deportes","Moda y estilo","Otro"];
+
+const state = { answers:{}, history:[] };
+
+// ---- Screen definitions ----
+// type: 'multi' (several fields on one screen), 'single' (radio), 'check' (checkbox)
+
+const screens = {};
+
+screens.entrada = {
+  section:"Entrada", title:"Antes de empezar", sub:"Estos datos aplican para todas las rutas.",
+  type:"multi",
+  fields:[
+    {key:"email", label:"Correo electrónico", kind:"email", placeholder:"nombre@correo.com"},
+    {key:"nombre", label:"Nombre completo", kind:"text", placeholder:"Nombre y apellido"},
+    {key:"nicho", label:"¿En qué nicho trabajas?", kind:"select", options:NICHOS}
+  ],
+  next: () => "segmentacion"
+};
+
+screens.segmentacion = {
+  section:"Segmentación", title:"¿Cómo describes tu momento actual?",
+  sub:"Esta respuesta define el resto de tu ruta.",
+  type:"single", key:"ruta",
+  options:[
+    {value:"A", label:"Estoy iniciando", desc:"Sin cuenta activa, o facturo menos de $2.000 USD/mes"},
+    {value:"B", label:"Ya tengo cuenta activa", desc:"Cuenta en Hotmart y facturo más de $2.000 USD/mes"}
+  ],
+  next: (a) => a.ruta === "A" ? "a_p1" : "b_modulo"
+};
+
+/* ---------------- RAMA A ---------------- */
+screens.a_p1 = {section:"Punto de partida", title:"¿Tienes algún producto o servicio definido actualmente?",
+  type:"single", key:"a1",
+  options:[{value:"si",label:"Sí, ya está definido"},{value:"proceso",label:"Lo estoy definiendo"},{value:"no",label:"No, todavía no"}],
+  next:()=>"a_p2"};
+screens.a_p2 = {section:"Punto de partida", title:"¿Qué tipo de producto quieres crear o ya tienes?",
+  sub:"Puedes elegir más de uno.",
+  type:"check", key:"a2",
+  options:["Curso online","Ebook / material descargable","Membresía o comunidad","Coaching / mentoría 1:1","Servicio o consultoría","Aún no lo sé"],
+  next:()=>"a_p3"};
+screens.a_p3 = {section:"Punto de partida", title:"¿Cuánto estarías dispuesto a cobrar por tu producto principal?",
+  type:"single", key:"a3",
+  options:[{value:"<20",label:"Menos de $20 USD"},{value:"20-50",label:"$20 – $50 USD"},{value:"50-100",label:"$50 – $100 USD"},{value:"100-300",label:"$100 – $300 USD"},{value:">300",label:"Más de $300 USD"}],
+  next:()=>"a_p4"};
+screens.a_p4 = {section:"Punto de partida", title:"¿Tienes audiencia en alguna red social o lista de contactos?",
+  type:"single", key:"a4",
+  options:[{value:"no",label:"No tengo audiencia aún"},{value:"pequeña",label:"Audiencia pequeña (menos de 1.000)"},{value:"establecida",label:"Audiencia establecida (más de 1.000)"}],
+  next:()=>"a_p5"};
+screens.a_p5 = {section:"Punto de partida", title:"¿Sabes cómo vas a atraer compradores?",
+  sub:"Selecciona los canales que consideras.",
+  type:"check", key:"a5",
+  options:["Redes sociales orgánico","Publicidad paga","Email marketing","Afiliados","SEO / blog","Aún no lo sé"],
+  next:()=>"a_p6"};
+screens.a_p6 = {section:"Punto de partida", title:"¿Cuál es tu principal objetivo para los próximos 3 meses?",
+  type:"single", key:"a6",
+  options:[{value:"validar",label:"Validar mi primera oferta"},{value:"vender",label:"Conseguir mis primeras ventas"},{value:"audiencia",label:"Construir audiencia"},{value:"definir",label:"Terminar de definir mi producto"}],
+  next:()=>"a2_p1"};
+
+screens.a2_p1 = {section:"Configuración Hotmart", title:"¿Tienes cuenta creada en Hotmart?",
+  type:"single", key:"h1",
+  options:[{value:"si",label:"Sí"},{value:"no",label:"No"}],
+  next:()=>"a2_p2"};
+screens.a2_p2 = {section:"Configuración Hotmart", title:"¿Conoces estas herramientas de Hotmart?",
+  sub:"Selecciona las que ya conoces o usas.",
+  type:"check", key:"h2",
+  options:["Hotmart Club","Hotmart Send","Hotmart Community","Checkout personalizado","Order Bump","Programa de afiliados","Ninguna"],
+  next:()=>"a2_p3"};
+screens.a2_p3 = {section:"Configuración Hotmart", title:"¿Tienes una escalera de valor pensada?",
+  type:"single", key:"h3",
+  options:[{value:"si",label:"Sí, tengo una ruta clara de productos"},{value:"idea",label:"Tengo una idea, pero no está definida"},{value:"no",label:"No lo he pensado todavía"}],
+  next:()=>"a2_p4"};
+screens.a2_p4 = {section:"Configuración Hotmart", title:"¿Cuántos productos planeas tener activos en los próximos 6 meses?",
+  type:"single", key:"h4",
+  options:[{value:"1",label:"1 producto"},{value:"2-3",label:"2 a 3 productos"},{value:"4-6",label:"4 a 6 productos"},{value:"6+",label:"Más de 6 productos"}],
+  next:()=>"a2_p5"};
+screens.a2_p5 = {section:"Configuración Hotmart", title:"¿Con qué modelo de venta quieres empezar?",
+  type:"single", key:"h5",
+  options:[{value:"lanzamiento",label:"Lanzamiento"},{value:"evergreen",label:"Evergreen"},{value:"webinar",label:"Webinar"},{value:"no_se",label:"No sé todavía"}],
+  next:()=>"a2_p6"};
+screens.a2_p6 = {section:"Configuración Hotmart", title:"¿Tienes algún presupuesto inicial para invertir en tu negocio?",
+  type:"single", key:"h6",
+  options:[{value:"<100",label:"Menos de $100 USD"},{value:"100-500",label:"$100 – $500 USD"},{value:"500-1500",label:"$500 – $1.500 USD"},{value:">1500",label:"Más de $1.500 USD"}],
+  next:()=>"resumen"};
+
+/* ---------------- RAMA B ---------------- */
+screens.b_modulo = {section:"Elección de módulo", title:"¿Qué diagnóstico te aporta más valor ahora mismo?",
+  sub:"Solo responderás las preguntas de este módulo.",
+  type:"single", key:"modulo",
+  options:[
+    {value:"1", label:"Análisis de cuenta", desc:"Métricas, comunidad y benchmarking competitivo"},
+    {value:"2", label:"Tráfico pago", desc:"Pauta, CPL, ROAS y estructura de inversión"},
+    {value:"3", label:"Retención y escalamiento", desc:"Cronogramas, recompra y benchmarking de mercado"}
+  ],
+  next:(a)=> a.modulo==="1"?"m1_p1": a.modulo==="2"?"m2_p1":"m3_p1"};
+
+// Módulo 1 — Análisis de cuenta
+screens.m1_p1 = {section:"Análisis de cuenta", title:"ID o correo de tu cuenta en Hotmart",
+  type:"multi", fields:[{key:"m1_id",label:"ID / correo de cuenta",kind:"text",placeholder:"tu ID o correo registrado"}],
+  next:()=>"m1_p2"};
+screens.m1_p2 = {section:"Análisis de cuenta", title:"¿Cuál es tu facturación mensual promedio actual?",
+  type:"single", key:"m1_2",
+  options:[{value:"2-5k",label:"$2.000 – $5.000 USD"},{value:"5-10k",label:"$5.000 – $10.000 USD"},{value:"10-20k",label:"$10.000 – $20.000 USD"},{value:">20k",label:"Más de $20.000 USD"}],
+  next:()=>"m1_p3"};
+screens.m1_p3 = {section:"Análisis de cuenta", title:"¿Conoces tu tasa de reembolso actual?",
+  type:"single", key:"m1_3",
+  options:[{value:"<5",label:"Debajo del 5%"},{value:"5-10",label:"5% – 10%"},{value:">10",label:"Más del 10%"},{value:"no_se",label:"No sé"}],
+  next:()=>"m1_p4"};
+screens.m1_p4 = {section:"Análisis de cuenta", title:"¿Conoces tu tasa de aprobación de pagos?",
+  type:"single", key:"m1_4",
+  options:[{value:">80",label:"Arriba del 80%"},{value:"60-80",label:"60% – 80%"},{value:"<60",label:"Debajo del 60%"},{value:"no_se",label:"No sé"}],
+  next:()=>"m1_p5"};
+screens.m1_p5 = {section:"Análisis de cuenta", title:"¿Usas Hotmart Community con tus alumnos?",
+  type:"single", key:"m1_5",
+  options:[{value:"activa",label:"Sí, está activa"},{value:"sin_uso",label:"Creada, pero sin uso"},{value:"no",label:"No la tengo"}],
+  next:()=>"m1_p6"};
+screens.m1_p6 = {section:"Análisis de cuenta", title:"¿Tienes tutores o equipo de soporte al alumno?",
+  type:"single", key:"m1_6",
+  options:[{value:"equipo",label:"Sí, equipo dedicado"},{value:"yo",label:"Lo hago yo mismo"},{value:"no",label:"No tengo"}],
+  next:()=>"m1_p7"};
+screens.m1_p7 = {section:"Análisis de cuenta", title:"¿Usas otras plataformas además de Hotmart?",
+  type:"check", key:"m1_7",
+  options:["Stripe","NAS / Netshow","Skool","Kajabi","Otra","Ninguna"],
+  next:()=>"resumen"};
+
+// Módulo 2 — Tráfico pago
+screens.m2_p1 = {section:"Tráfico pago", title:"¿Cuánto inviertes actualmente en pauta mensual?",
+  type:"single", key:"m2_1",
+  options:[{value:"0",label:"No invierto actualmente"},{value:"<500",label:"Menos de $500 USD"},{value:"500-2000",label:"$500 – $2.000 USD"},{value:"2000-5000",label:"$2.000 – $5.000 USD"},{value:">5000",label:"Más de $5.000 USD"}],
+  next:()=>"m2_p2"};
+screens.m2_p2 = {section:"Tráfico pago", title:"¿En qué plataformas pautas?",
+  type:"check", key:"m2_2",
+  options:["Meta Ads","Google Ads","TikTok Ads","YouTube Ads","Ninguna todavía"],
+  next:()=>"m2_p3"};
+screens.m2_p3 = {section:"Tráfico pago", title:"¿Conoces tu Costo por Lead (CPL) promedio?",
+  type:"single", key:"m2_3",
+  options:[{value:"exacto",label:"Sí, exacto"},{value:"aprox",label:"Aproximado"},{value:"no",label:"No lo mido"}],
+  next:()=>"m2_p4"};
+screens.m2_p4 = {section:"Tráfico pago", title:"¿Cuál es tu ROAS aproximado?",
+  sub:"Retorno sobre inversión en pauta.",
+  type:"single", key:"m2_4",
+  options:[{value:"<2x",label:"Menos de 2x"},{value:"2-5x",label:"2x – 5x"},{value:">5x",label:"Más de 5x"},{value:"no",label:"No lo mido"}],
+  next:()=>"m2_p5"};
+screens.m2_p5 = {section:"Tráfico pago", title:"¿Tienes píxel de seguimiento instalado y funcionando?",
+  type:"single", key:"m2_5",
+  options:[{value:"si",label:"Instalado y verificado"},{value:"sin_confirmar",label:"Instalado, sin confirmar"},{value:"no",label:"No lo tengo"}],
+  next:()=>"m2_p6"};
+screens.m2_p6 = {section:"Tráfico pago", title:"¿Tienes equipo de media buyer o lo manejas tú solo?",
+  type:"single", key:"m2_6",
+  options:[{value:"agencia",label:"Agencia o media buyer"},{value:"yo",label:"Yo mismo"},{value:"nadie",label:"Nadie a cargo"}],
+  next:()=>"resumen"};
+
+// Módulo 3 — Retención y escalamiento
+screens.m3_p1 = {section:"Retención y escalamiento", title:"¿Cuánto lleva activa tu cuenta en Hotmart?",
+  type:"single", key:"m3_1",
+  options:[{value:"<6m",label:"Menos de 6 meses"},{value:"6m-2a",label:"6 meses – 2 años"},{value:">2a",label:"Más de 2 años"}],
+  next:()=>"m3_p2"};
+screens.m3_p2 = {section:"Retención y escalamiento", title:"¿Tienes un calendario de lanzamientos definido?",
+  type:"single", key:"m3_2",
+  options:[{value:"si",label:"Sí, planeado"},{value:"oportunidad",label:"Por oportunidad"},{value:"no",label:"No tengo"}],
+  next:()=>"m3_p3"};
+screens.m3_p3 = {section:"Retención y escalamiento", title:"¿Cuál es tu modelo de ingreso principal actualmente?",
+  type:"single", key:"m3_3",
+  options:[{value:"lanzamientos",label:"Lanzamientos"},{value:"evergreen",label:"Evergreen"},{value:"membresia",label:"Membresía"},{value:"combinado",label:"Combinado"}],
+  next:()=>"m3_p4"};
+screens.m3_p4 = {section:"Retención y escalamiento", title:"¿Qué porcentaje de tus ingresos viene de clientes que ya te compraron antes?",
+  type:"single", key:"m3_4",
+  options:[{value:"<20",label:"Menos del 20%"},{value:"20-40",label:"20% – 40%"},{value:">40",label:"Más del 40%"},{value:"no_mido",label:"No lo mido"}],
+  next:()=>"m3_p5"};
+screens.m3_p5 = {section:"Retención y escalamiento", title:"¿Cuál es tu principal barrera para escalar?",
+  sub:"Selecciona las que apliquen.",
+  type:"check", key:"m3_5",
+  options:["Falta de tiempo","Falta de equipo","Falta de tráfico","Falta de producto nuevo","Falta de sistema / procesos","Falta de capital"],
+  next:()=>"m3_p6"};
+screens.m3_p6 = {section:"Retención y escalamiento", title:"¿Tienes competidores directos identificados en tu nicho?",
+  type:"single", key:"m3_6",
+  options:[{value:"si",label:"Sí, los conozco bien"},{value:"idea",label:"Tengo una idea"},{value:"no",label:"No los conozco"}],
+  next:()=>"m3_p7"};
+screens.m3_p7 = {section:"Retención y escalamiento", title:"¿Qué resultado quieres lograr en los próximos 6 meses?",
+  type:"single", key:"m3_7",
+  options:[{value:"duplicar",label:"Duplicar mi facturación"},{value:"diversificar",label:"Diversificar mis ingresos"},{value:"equipo",label:"Construir un equipo"},{value:"expandir",label:"Expandir a nuevos mercados"}],
+  next:()=>"resumen"};
+
+/* ============================================================
+   DELIVERABLE MAPPING
+   ============================================================ */
+function getDeliverable(a){
+  if(a.ruta === "A"){
+    return {
+      name:"Diagnóstico de Punto de Partida + Configuración Hotmart",
+      route:"Rama A · Iniciando",
+      items:[
+        "Escalera de valor recomendada para el nicho declarado",
+        "Ticket promedio del mercado en su categoría",
+        "Herramientas Hotmart a configurar, en orden de prioridad",
+        "Estructura de diversificación de producto sugerida",
+        "Modelo de venta recomendado según audiencia y presupuesto",
+        "Bloque de próximos pasos (30/60/90 días)"
+      ]
+    };
+  }
+  if(a.modulo === "1"){
+    return {
+      name:"Diagnóstico de Cuenta y Benchmarking",
+      route:"Rama B · Módulo 1 — Análisis de cuenta",
+      items:[
+        "Diagnóstico de tasa de reembolso y aprobación vs. benchmark del nicho",
+        "Insights sobre el sistema de tutores y soporte al alumno",
+        "Potencial de uso de Hotmart Community y mejores prácticas",
+        "Comparativa de funcionalidades y costos vs. Stripe, NAS y Skool",
+        "Recomendaciones específicas por indicador fuera de rango",
+        "Bloque de próximos pasos"
+      ]
+    };
+  }
+  if(a.modulo === "2"){
+    return {
+      name:"Diagnóstico de Tráfico Pago e Inversión",
+      route:"Rama B · Módulo 2 — Tráfico pago",
+      items:[
+        "Diagnóstico de la estructura de pauta actual y principales brechas",
+        "Benchmarking de CPL y ROAS promedio para el nicho declarado",
+        "Recomendaciones de distribución de inversión por etapa del funnel",
+        "Checklist de configuración de píxel y seguimiento de conversiones",
+        "Plan de escalamiento de pauta según facturación y ROAS objetivo",
+        "Bloque de próximos pasos"
+      ]
+    };
+  }
+  return {
+    name:"Diagnóstico de Retención y Escalamiento",
+    route:"Rama B · Módulo 3 — Retención y escalamiento",
+    items:[
+      "Cronograma de lanzamientos recomendado según nicho y data de Hotmart",
+      "Benchmarking de mercado: facturación, frecuencia y estacionalidad",
+      "Análisis de mercado y posicionamiento frente a la competencia",
+      "Estrategia de recompra para incrementar clientes recurrentes",
+      "Hoja de ruta de diversificación de ingresos",
+      "Bloque de próximos pasos"
+    ]
+  };
+}
+
+/* ============================================================
+   RENDER ENGINE
+   ============================================================ */
+let currentId = "entrada";
+
+function railSteps(){
+  const a = state.answers;
+  const steps = [{id:"entrada", label:"Entrada", sub:"Correo, nombre, nicho"}];
+  steps.push({id:"segmentacion", label:"Segmentación", sub:"¿Iniciando o cuenta activa?"});
+  if(!a.ruta){ steps.push({id:"?", label:"Ruta por definir", sub:""}); return steps; }
+  if(a.ruta==="A"){
+    steps.push({id:"a_block", label:"Punto de partida", sub:"6 preguntas"});
+    steps.push({id:"a2_block", label:"Config. Hotmart", sub:"6 preguntas"});
+  } else {
+    steps.push({id:"b_modulo", label:"Elección de módulo", sub:"Análisis / Tráfico / Retención"});
+    const modLabel = a.modulo==="1"?"Módulo 1 · Análisis de cuenta": a.modulo==="2"?"Módulo 2 · Tráfico pago": a.modulo==="3"?"Módulo 3 · Retención":"Módulo elegido";
+    steps.push({id:"b_block", label:modLabel, sub:"Preguntas específicas"});
+  }
+  steps.push({id:"resumen", label:"Entrega", sub:"Diagnóstico personalizado"});
+  return steps;
+}
+
+function currentGroupId(){
+  if(currentId==="entrada") return "entrada";
+  if(currentId==="segmentacion") return "segmentacion";
+  if(currentId.startsWith("a2_")) return "a2_block";
+  if(currentId.startsWith("a_")) return "a_block";
+  if(currentId==="b_modulo") return "b_modulo";
+  if(currentId.startsWith("m1_")||currentId.startsWith("m2_")||currentId.startsWith("m3_")) return "b_block";
+  if(currentId==="resumen") return "resumen";
+  return currentId;
+}
+
+function renderRail(){
+  const steps = railSteps();
+  const activeGroup = currentGroupId();
+  let passedActive = false;
+  const html = steps.map(s=>{
+    let cls = "route-node";
+    if(s.id === activeGroup){ cls += " active"; passedActive = true; }
+    else if(!passedActive && s.id!=="?"){ cls += " done"; }
+    return `<div class="${cls}"><b>${s.label}</b><span class="route-label-sub">${s.sub}</span></div>`;
+  }).join("");
+  document.getElementById("rail").innerHTML = `
+    <div class="rail-brand">Hotmart · New Business</div>
+    <div class="rail-title">Reconocimiento de Necesidades</div>
+    ${html}`;
+}
+
+function estimateProgress(){
+  // rough step counters per branch, for the progress bar only
+  const a = state.answers;
+  const order = ["entrada","segmentacion"];
+  if(a.ruta==="A"){ order.push(...["a_p1","a_p2","a_p3","a_p4","a_p5","a_p6","a2_p1","a2_p2","a2_p3","a2_p4","a2_p5","a2_p6"]); }
+  else if(a.ruta==="B"){
+    order.push("b_modulo");
+    if(a.modulo==="1") order.push(...["m1_p1","m1_p2","m1_p3","m1_p4","m1_p5","m1_p6","m1_p7"]);
+    else if(a.modulo==="2") order.push(...["m2_p1","m2_p2","m2_p3","m2_p4","m2_p5","m2_p6"]);
+    else if(a.modulo==="3") order.push(...["m3_p1","m3_p2","m3_p3","m3_p4","m3_p5","m3_p6","m3_p7"]);
+  } else {
+    order.push("b_modulo?");
+  }
+  order.push("resumen");
+  const idx = order.indexOf(currentId);
+  const pct = idx<0 ? 8 : Math.round(((idx+1)/order.length)*100);
+  document.getElementById("progressFill").style.width = pct+"%";
+}
+
+function isValid(screen){
+  if(screen.type==="multi"){
+    return screen.fields.every(f=> (state.answers[f.key]||"").toString().trim().length>0);
+  }
+  if(screen.type==="single"){ return !!state.answers[screen.key]; }
+  if(screen.type==="check"){ return (state.answers[screen.key]||[]).length>0; }
+  return true;
+}
+
+function renderScreen(){
+  if(currentId === "resumen"){ renderSummary(); renderRail(); estimateProgress(); return; }
+  const s = screens[currentId];
+  let body = `<div class="eyebrow">${s.section}</div><h1 class="q-title">${s.title}</h1>`;
+  if(s.sub) body += `<p class="q-sub">${s.sub}</p>`;
+
+  if(s.type==="multi"){
+    body += s.fields.map(f=>{
+      if(f.kind==="select"){
+        const val = state.answers[f.key]||"";
+        return `<div class="field-group"><label class="field-label">${f.label}</label>
+          <select id="f_${f.key}" onchange="setAnswer('${f.key}', this.value)"
+            style="width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:'Inter',sans-serif;background:#fff;color:var(--ink);">
+            <option value="" ${val?"":"selected"} disabled>Selecciona una opción</option>
+            ${f.options.map(o=>`<option value="${o}" ${val===o?"selected":""}>${o}</option>`).join("")}
+          </select></div>`;
+      }
+      const val = state.answers[f.key]||"";
+      return `<div class="field-group"><label class="field-label">${f.label}</label>
+        <input type="${f.kind}" id="f_${f.key}" value="${val}" placeholder="${f.placeholder||""}"
+          oninput="setAnswer('${f.key}', this.value)"></div>`;
+    }).join("");
+  }
+
+  if(s.type==="single"){
+    body += `<div class="opt-list">` + s.options.map(o=>{
+      const sel = state.answers[s.key]===o.value;
+      return `<label class="opt ${sel?"selected":""}" onclick="selectSingle('${s.key}','${o.value}')">
+        <input type="radio" name="${s.key}" ${sel?"checked":""} readonly>
+        <span class="opt-text"><b>${o.label}</b>${o.desc?o.desc:""}</span></label>`;
+    }).join("") + `</div>`;
+  }
+
+  if(s.type==="check"){
+    const current = state.answers[s.key]||[];
+    body += `<div class="opt-list">` + s.options.map(o=>{
+      const sel = current.includes(o);
+      return `<label class="opt ${sel?"selected":""}" onclick="toggleCheck('${s.key}','${o}')">
+        <input type="checkbox" ${sel?"checked":""} readonly>
+        <span class="opt-text">${o}</span></label>`;
+    }).join("") + `</div>`;
+  }
+
+  const canGoBack = state.history.length>0;
+  const valid = isValid(s);
+  body += `<div class="nav-row">
+      <button class="btn-ghost" onclick="goBack()" ${canGoBack?"":"disabled style='visibility:hidden'"}>← Anterior</button>
+      <button class="btn-primary" id="nextBtn" onclick="goNext()" ${valid?"":"disabled"}>Siguiente →</button>
+    </div>`;
+
+  document.getElementById("cardBody").innerHTML = body;
+  renderRail();
+  estimateProgress();
+}
+
+function setAnswer(key,val){
+  state.answers[key]=val;
+  document.getElementById("nextBtn").disabled = !isValid(screens[currentId]);
+}
+function selectSingle(key,val){
+  state.answers[key]=val;
+  renderScreen();
+}
+function toggleCheck(key,val){
+  const arr = state.answers[key]||[];
+  const i = arr.indexOf(val);
+  if(i>-1) arr.splice(i,1); else arr.push(val);
+  state.answers[key]=arr;
+  renderScreen();
+}
+function goNext(){
+  const s = screens[currentId];
+  if(!isValid(s)) return;
+  state.history.push(currentId);
+  currentId = s.next(state.answers);
+  renderScreen();
+  document.querySelector('.main').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+function goBack(){
+  if(state.history.length===0) return;
+  currentId = state.history.pop();
+  renderScreen();
+  window.scrollTo(0,0);
+}
+
+function renderSummary(){
+  const d = getDeliverable(state.answers);
+  const payload = {
+    cliente:{ email: state.answers.email, nombre: state.answers.nombre, nicho: state.answers.nicho },
+    ruta: d.route,
+    entregable_recomendado: d.name,
+    respuestas: state.answers
+  };
+  document.getElementById("cardBody").innerHTML = `
+    <div class="summary-badge">${d.route}</div>
+    <h1 class="deliverable-name">${d.name}</h1>
+    <p class="q-sub">Con estas respuestas, este es el entregable que le aporta más valor a ${state.answers.nombre||"este cliente"} en este momento. Este será el contenido base del diagnóstico:</p>
+    <ul class="checklist">${d.items.map(i=>`<li>${i}</li>`).join("")}</ul>
+    <label class="field-label">Datos capturados (para generar el entregable)</label>
+    <div class="json-box" id="jsonBox">${JSON.stringify(payload,null,2)}</div>
+    <div class="copy-row">
+      <button class="btn-primary" onclick="copyJSON()">Copiar datos para generar el diagnóstico</button>
+      <button class="btn-ghost" onclick="restart()">Empezar otro diagnóstico</button>
+    </div>
+  `;
+  window._payload = payload;
+}
+function copyJSON(){
+  navigator.clipboard.writeText(JSON.stringify(window._payload,null,2));
+  const btn = event.target;
+  const old = btn.textContent;
+  btn.textContent = "Copiado ✓";
+  setTimeout(()=>btn.textContent=old, 1600);
+}
+function restart(){
+  state.answers = {}; state.history = []; currentId = "entrada";
+  renderScreen();
+}
+
+renderScreen();
+</script>
+</body>
+</html>
