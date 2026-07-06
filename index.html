@@ -194,7 +194,7 @@ button:active{transform:scale(.98);}
 /* ============================================================
    CONFIG — pega aquí la URL de tu Apps Script Web App (ver Code.gs)
    ============================================================ */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwsrXBj3cF77v6c-tUObODrpILs96PPNNQNSe5wtn8MKGVPVbj8vtPPiXp3ED6bAT5ew/exec";
+const APPS_SCRIPT_URL = "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT";
 
 /* ============================================================
    DATA: routing tree, exactly mirroring "Mapa de preguntas OB"
@@ -550,8 +550,8 @@ function renderScreen(){
   if(s.type==="single"){
     body += `<div class="opt-list">` + s.options.map(o=>{
       const sel = state.answers[s.key]===o.value;
-      return `<label class="opt ${sel?"selected":""}" onclick="selectSingle('${s.key}','${o.value}')">
-        <input type="radio" name="${s.key}" ${sel?"checked":""} readonly>
+      return `<label class="opt ${sel?"selected":""}">
+        <input type="radio" name="${s.key}" ${sel?"checked":""} onchange="selectSingle('${s.key}','${o.value}')">
         <span class="opt-text"><b>${o.label}</b>${o.desc?o.desc:""}</span></label>`;
     }).join("") + `</div>`;
   }
@@ -560,8 +560,8 @@ function renderScreen(){
     const current = state.answers[s.key]||[];
     body += `<div class="opt-list">` + s.options.map(o=>{
       const sel = current.includes(o);
-      return `<label class="opt ${sel?"selected":""}" onclick="toggleCheck('${s.key}','${o}')">
-        <input type="checkbox" ${sel?"checked":""} readonly>
+      return `<label class="opt ${sel?"selected":""}">
+        <input type="checkbox" ${sel?"checked":""} onchange="toggleCheck('${s.key}','${o}')">
         <span class="opt-text">${o}</span></label>`;
     }).join("") + `</div>`;
   }
@@ -620,16 +620,33 @@ function renderSummary(){
   const d = getDeliverable(state.answers);
   const payload = buildPayload();
 
-  // Pantalla de "enviando" mientras se hace el POST
+  const mensajes = [
+    "Analizando tus respuestas…",
+    "Cruzando tu nicho con benchmarks de mercado…",
+    "Generando tu diagnóstico personalizado…",
+    "Preparando el documento final…",
+    "Ya casi está listo…"
+  ];
+  let step = 0;
+
   document.getElementById("cardBody").innerHTML = `
     <div class="summary-badge">${d.route}</div>
     <h1 class="deliverable-name">Procesando tu diagnóstico…</h1>
-    <p class="q-sub">Un momento, estamos preparando todo para ${state.answers.nombre||"ti"}.</p>
+    <p class="q-sub" id="processingMsg">${mensajes[0]}</p>
+    <div class="progress-track"><div class="progress-fill" id="processingBar" style="width:6%;transition:width 1.8s ease;"></div></div>
   `;
 
+  const msgEl = document.getElementById("processingMsg");
+  const barEl = document.getElementById("processingBar");
+  const interval = setInterval(()=>{
+    step = Math.min(step+1, mensajes.length-1);
+    if(msgEl) msgEl.textContent = mensajes[step];
+    if(barEl) barEl.style.width = Math.min(12 + step*20, 92) + "%";
+  }, 1800);
+
   submitToBackend(payload)
-    .then(()=> renderThankYou(d, true))
-    .catch(()=> renderThankYou(d, false));
+    .then(()=>{ clearInterval(interval); if(barEl) barEl.style.width="100%"; setTimeout(()=>renderThankYou(d, true), 300); })
+    .catch(()=>{ clearInterval(interval); renderThankYou(d, false); });
 }
 
 function submitToBackend(payload){
