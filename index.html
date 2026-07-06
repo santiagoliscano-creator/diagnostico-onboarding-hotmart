@@ -192,6 +192,11 @@ button:active{transform:scale(.98);}
 
 <script>
 /* ============================================================
+   CONFIG — pega aquí la URL de tu Apps Script Web App (ver Code.gs)
+   ============================================================ */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwsrXBj3cF77v6c-tUObODrpILs96PPNNQNSe5wtn8MKGVPVbj8vtPPiXp3ED6bAT5ew/exec";
+
+/* ============================================================
    DATA: routing tree, exactly mirroring "Mapa de preguntas OB"
    ============================================================ */
 
@@ -604,35 +609,54 @@ function goBack(){
   window.scrollTo(0,0);
 }
 
+function buildPayload(){
+  const a = { ...state.answers };
+  const email = a.email, nombre = a.nombre, nicho = a.nicho, ruta = a.ruta, modulo = a.modulo || "";
+  delete a.email; delete a.nombre; delete a.nicho; delete a.ruta; delete a.modulo;
+  return { email, nombre, nicho, ruta, modulo, respuestas: a };
+}
+
 function renderSummary(){
   const d = getDeliverable(state.answers);
-  const payload = {
-    cliente:{ email: state.answers.email, nombre: state.answers.nombre, nicho: state.answers.nicho },
-    ruta: d.route,
-    entregable_recomendado: d.name,
-    respuestas: state.answers
-  };
+  const payload = buildPayload();
+
+  // Pantalla de "enviando" mientras se hace el POST
   document.getElementById("cardBody").innerHTML = `
     <div class="summary-badge">${d.route}</div>
-    <h1 class="deliverable-name">${d.name}</h1>
-    <p class="q-sub">Con estas respuestas, este es el entregable que le aporta más valor a ${state.answers.nombre||"este cliente"} en este momento. Este será el contenido base del diagnóstico:</p>
+    <h1 class="deliverable-name">Procesando tu diagnóstico…</h1>
+    <p class="q-sub">Un momento, estamos preparando todo para ${state.answers.nombre||"ti"}.</p>
+  `;
+
+  submitToBackend(payload)
+    .then(()=> renderThankYou(d, true))
+    .catch(()=> renderThankYou(d, false));
+}
+
+function submitToBackend(payload){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PEGA_AQUI") === 0){
+    return Promise.reject(new Error("Apps Script URL no configurada"));
+  }
+  const body = new URLSearchParams();
+  body.append("data", JSON.stringify(payload));
+  // mode: 'no-cors' -> Apps Script bloquea la lectura de la respuesta desde el
+  // navegador, pero sí procesa el request. No esperamos ni leemos la respuesta.
+  return fetch(APPS_SCRIPT_URL, { method:"POST", mode:"no-cors", body })
+    .then(()=> true);
+}
+
+function renderThankYou(d, sentOk){
+  document.getElementById("cardBody").innerHTML = `
+    <div class="summary-badge">${d.route}</div>
+    <h1 class="deliverable-name">¡Gracias, ${state.answers.nombre||""}!</h1>
+    <p class="q-sub">Ya recibimos tus respuestas. Tu asesor de Hotmart está preparando tu <b>${d.name}</b> y se pondrá en contacto contigo muy pronto para entregártelo y revisarlo juntos.</p>
     <ul class="checklist">${d.items.map(i=>`<li>${i}</li>`).join("")}</ul>
-    <label class="field-label">Datos capturados (para generar el entregable)</label>
-    <div class="json-box" id="jsonBox">${JSON.stringify(payload,null,2)}</div>
+    ${sentOk ? "" : `<p style="font-size:12.5px;color:#B23A00;background:#FFF0E4;padding:12px 14px;border-radius:8px;">No pudimos confirmar el envío automático (revisa que APPS_SCRIPT_URL esté configurado en el HTML). El onboarder puede tomar tus datos manualmente mientras se corrige.</p>`}
     <div class="copy-row">
-      <button class="btn-primary" onclick="copyJSON()">Copiar datos para generar el diagnóstico</button>
-      <button class="btn-ghost" onclick="restart()">Empezar otro diagnóstico</button>
+      <button class="btn-ghost" onclick="restart()">Hacer otro diagnóstico</button>
     </div>
   `;
-  window._payload = payload;
 }
-function copyJSON(){
-  navigator.clipboard.writeText(JSON.stringify(window._payload,null,2));
-  const btn = event.target;
-  const old = btn.textContent;
-  btn.textContent = "Copiado ✓";
-  setTimeout(()=>btn.textContent=old, 1600);
-}
+
 function restart(){
   state.answers = {}; state.history = []; currentId = "entrada";
   renderScreen();
